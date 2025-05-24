@@ -5,11 +5,11 @@ import win32con
 import win32gui
 import win32api
 
-SHOW_TIME = 0.05  # 50ms
-HIDE_TIME = 0.2   # 200ms
-
 class OverlayWindow:
-    def __init__(self):
+    def __init__(self, displayCoverPeriod = 200, displayUncoverPeriod = 200):
+        self.hideTime = displayCoverPeriod
+        self.showTime = displayUncoverPeriod
+    
         self.hInstance = win32api.GetModuleHandle()
         self.className = "StrobeOverlay"
         self.running = True
@@ -49,9 +49,9 @@ class OverlayWindow:
     def flash_loop(self):
         while self.running:
             self.show_overlay(True)
-            time.sleep(.2)
+            time.sleep(self.hideTime / 1000)
             self.show_overlay(False)
-            time.sleep(.2)
+            time.sleep(self.showTime / 1000)
 
     def show_overlay(self, visible):
         hdc_screen = win32gui.GetDC(0)
@@ -91,12 +91,3 @@ class OverlayWindow:
     def run(self):
         signal.signal(signal.SIGINT, lambda x, y: win32gui.PostQuitMessage(0))
         win32gui.PumpMessages()
-
-
-if __name__ == "__main__":
-    overlay = OverlayWindow()
-    try:
-        overlay.run()
-    except KeyboardInterrupt:
-        overlay.running = False
-        win32gui.DestroyWindow(overlay.hwnd)
