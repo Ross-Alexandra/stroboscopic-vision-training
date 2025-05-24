@@ -1,6 +1,5 @@
 import time
 import threading
-import signal
 import win32con
 import win32gui
 import win32api
