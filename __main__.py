@@ -16,12 +16,13 @@ level_count = len(levels)
 
 
 @click.command()
-@click.option('--level', prompt=f'What level do you want to play on (1-{level_count})', type=int)
-def startStrobe(level):
+@click.option('--level', prompt=f'What level do you want to play on (1-{level_count})', type=int, default=1)
+@click.option('--custom-timings', help="Custom timings (hide_time show_time)", nargs=2, is_flag=False, type=int)
+def startStrobe(level, custom_timings):
     if (level < 1 or level > level_count):
         raise f'Invalid level, please select a level between 1 and {level_count}'   
 
-    hide_time, show_time = levels[level - 1]
+    hide_time, show_time = levels[level - 1] if custom_timings == None else custom_timings
     overlay = OverlayWindow(hide_time, show_time)
     try:
         overlay.run()
