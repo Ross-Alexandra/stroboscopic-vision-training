@@ -4,15 +4,16 @@ import signal
 import win32con
 import win32gui
 import win32api
-
+import keyboard
 class OverlayWindow:
     def __init__(self, displayCoverPeriod = 200, displayUncoverPeriod = 200):
-        self.hideTime = displayCoverPeriod
-        self.showTime = displayUncoverPeriod
+        self.hide_time = displayCoverPeriod
+        self.show_time = displayUncoverPeriod
     
         self.hInstance = win32api.GetModuleHandle()
         self.className = "StrobeOverlay"
         self.running = True
+        self.resumed = True
 
         wndClass = win32gui.WNDCLASS()
         wndClass.lpfnWndProc = self.wndProc
@@ -43,16 +44,39 @@ class OverlayWindow:
                               self.screen_width, self.screen_height,
                               win32con.SWP_SHOWWINDOW)
 
-        # Start flashing
+        # Start various background processes
+        print('Please press CTRL+q to stop the strobing, or CTRL+p to pause the strobing')
         threading.Thread(target=self.flash_loop, daemon=True).start()
+        threading.Thread(target=self.detect_stop_loop, daemon=True).start()
+        threading.Thread(target=self.pause_loop, daemon=True).start()
+        threading.Thread(target=self.quit_loop, daemon=True).start()
 
     def flash_loop(self):
         while self.running:
-            self.show_overlay(True)
-            time.sleep(self.hideTime / 1000)
-            self.show_overlay(False)
-            time.sleep(self.showTime / 1000)
+            while self.resumed:
+                self.show_overlay(True)
+                time.sleep(self.hide_time / 1000)
+                self.show_overlay(False)
+                time.sleep(self.show_time / 1000)
 
+            time.sleep(.2)
+ 
+    def detect_stop_loop(self):
+        while self.running:
+            time.sleep(1)
+        
+        print('Detected that running has stopped. Killing event loop.')
+        win32api.PostMessage(self.hwnd, win32con.WM_DESTROY, 0, 0)
+         
+    def quit_loop(self):
+        keyboard.wait('ctrl+q')
+        self.running = False
+ 
+    def pause_loop(self):
+        while self.running:
+            keyboard.wait('ctrl+p')
+            self.resumed = not self.resumed
+ 
     def show_overlay(self, visible):
         hdc_screen = win32gui.GetDC(0)
         hdc_mem = win32gui.CreateCompatibleDC(hdc_screen)
@@ -89,5 +113,4 @@ class OverlayWindow:
         return win32gui.DefWindowProc(hwnd, msg, wParam, lParam)
 
     def run(self):
-        signal.signal(signal.SIGINT, lambda x, y: win32gui.PostQuitMessage(0))
         win32gui.PumpMessages()
