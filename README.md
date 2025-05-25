@@ -14,5 +14,3 @@ To reduce risk:
  - Use the program in a well-lit room.
  - Sit an appropriate distance from the monitor.
  - Do not use if you are tired or sleep-deprived.
-
-If you're distributing the tool, you might also consider requiring users to acknowledge this warning on first launch, or displaying it for a few seconds before enabling the overlay.
